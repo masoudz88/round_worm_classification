@@ -13,19 +13,20 @@ if exist(modelPath, 'file')
     load(modelPath, 'wormsNet');
 else
     % Modify googlenet layers
-    net = googlenet;
+    [net, classes] = imagePretrainedNetwork("resnet50");
     lgraph = layerGraph(net);
+    net.Layers
     newFc = fullyConnectedLayer(2, "Name", "new_fc");
-    lgraph = replaceLayer(lgraph, "loss3-classifier", newFc);
+    lgraph = replaceLayer(lgraph, "fc1000", newFc);
     newOut = classificationLayer("Name", "new_out");
-    lgraph = replaceLayer(lgraph, "output", newOut);
+    lgraph = replaceLayer(lgraph, "fc1000_softmax", newOut);
 
     % Set Training Options
     options = trainingOptions("sgdm", "InitialLearnRate", 0.001);
-
+     
     % Train the Network
     wormsNet = trainNetwork(trainds, lgraph, options);
-
+    
     save(modelPath, 'wormsNet');
 end
 
@@ -33,5 +34,4 @@ end
 
 truetest = testData.Labels;
 nnz(preds == truetest)/numel(preds)
-
 confusionchart(truetest, preds)
